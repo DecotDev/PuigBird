@@ -2,6 +2,7 @@ package com.mygdx.bird;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.MathUtils;
@@ -22,8 +23,12 @@ public class GameScreen implements Screen {
     Array<Pipe> obstacles;
     long lastObstacleTime;
 
+    float score;
+
     public GameScreen(final Bird gam) {
         this.game = gam;
+
+        score = 0;
 
         // create the camera and the SpriteBatch
         camera = new OrthographicCamera();
@@ -88,11 +93,21 @@ public class GameScreen implements Screen {
         stage.getBatch().setProjectionMatrix(camera.combined);
         stage.draw();
 
+        //HUD
+        game.batch.begin();
+        game.smallFont.draw(game.batch, "Score: " + (int) score, 10, 470);
+        game.batch.end();
+
         // BLOQUE DE UPDATE
         stage.act();
+
+        //La puntuació augmenta amb el temps de joc
+        score += Gdx.graphics.getDeltaTime();
+
         // process user input
         if (Gdx.input.justTouched()) {
             player.impulso();
+            game.manager.get("flap.wav", Sound.class).play();
         }
         // Comprova que el jugador no es surt de la pantalla.
         // Si surt per la part inferior, game over
@@ -125,6 +140,11 @@ public class GameScreen implements Screen {
 
 
         if (dead) {
+            game.manager.get("fail.wav", Sound.class).play();
+
+            game.lastScore = (int) score;
+            if (game.lastScore > game.topScore) game.topScore = game.lastScore;
+
             game.setScreen(new GameOverScreen(game));
             dispose();
         }
